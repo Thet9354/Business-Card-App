@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -82,9 +83,10 @@ fun Intro() {
         ) {
             Image(
                 painter = image,
-                contentDescription = null,
+                contentDescription = "Profile Picture",
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.height(300.dp)
+                    .testTag("Profile Pic")
             )
 
             Text(
