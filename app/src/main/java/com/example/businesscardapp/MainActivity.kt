@@ -1,10 +1,18 @@
 package com.example.businesscardapp
 
+import android.Manifest
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
@@ -18,12 +26,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -80,7 +90,7 @@ fun BusinessCardApp() {
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 16.dp)
         ) {
-            Details()
+            Details(context = LocalContext.current, phone = "+65 93542856")
         }
     }
 }
@@ -104,7 +114,8 @@ fun Intro() {
                 painter = image,
                 contentDescription = "Profile Picture",
                 contentScale = ContentScale.Fit,
-                modifier = Modifier.height(300.dp)
+                modifier = Modifier
+                    .height(300.dp)
                     .testTag("Profile Pic")
             )
 
@@ -126,13 +137,37 @@ fun Intro() {
 
 
 @Composable
-fun Details(modifier: Modifier = Modifier) {
+fun Details(context: Context, modifier: Modifier = Modifier, phone: String) {
+
+    val launcher: ActivityResultLauncher<String> = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            // Permission is granted, initiate the phone call
+            val phoneUri = Uri.parse("tel:$phone")
+            val phoneIntent = Intent(Intent.ACTION_DIAL, phoneUri)
+            context.startActivity(phoneIntent)
+        } else {
+            // Permission is not granted, handle it as desired (e.g., show an error message)
+        }
+    }
+
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.BottomCenter
     ) {
         Column {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.clickable {
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE)
+                == PackageManager.PERMISSION_GRANTED){
+                    val phoneUri = Uri.parse("tel:$phone")
+                    val phoneIntent = Intent(Intent.ACTION_DIAL, phoneUri)
+                    context.startActivity(phoneIntent)
+                } else {
+                    launcher.launch(Manifest.permission.CALL_PHONE)
+                }
+            }) {
                 val phoneIcon = Icons.Rounded.Phone
                 Icon(
                     imageVector = phoneIcon,
@@ -152,7 +187,10 @@ fun Details(modifier: Modifier = Modifier) {
                 Text(text = "https://github.com/Thet9354")
             }
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.clickable {
+                launchEmailIntent(context)
+            }) {
                 val emailIcon = Icons.Rounded.Email
                 Icon(
                     imageVector = emailIcon,
@@ -165,7 +203,17 @@ fun Details(modifier: Modifier = Modifier) {
     }
 }
 
+fun launchEmailIntent(context: Context) {
+    val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
+        data = Uri.parse("mailto:thetpine254@gmail.com")
+        // Add any subject or body to the email, if desired
+        putExtra(Intent.EXTRA_SUBJECT, "Subject of the email")
+        putExtra(Intent.EXTRA_TEXT, "Body of the email")
+    }
 
+    // Start the email intent using the provided context
+    context.startActivity(emailIntent)
+}
 
 @Preview(showBackground = true)
 @Composable
@@ -174,3 +222,6 @@ fun DefaultPreview() {
         BusinessCardApp()
     }
 }
+
+
+
